@@ -1,0 +1,37 @@
+{
+    "os": "macOS-13.5-arm64-arm-64bit",
+    "python": "3.11.6",
+    "heartbeatAt": "2023-11-09T12:14:44.283174",
+    "startedAt": "2023-11-09T12:14:39.562634",
+    "docker": null,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "program": "/Users/pesala/PycharmProjects/Thesis/test.py",
+    "codePathLocal": "test.py",
+    "codePath": "test.py",
+    "git": {
+        "remote": "https://github.com/pesala111/Brain-Tumor-Classification-with-Explainable-AI",
+        "commit": "f405c8bc58f2b7b5a0bc5e7ac6b0fd0fd619e0ae"
+    },
+    "email": "pesalamadhavareddy1@gmail.com",
+    "root": "/Users/pesala/PycharmProjects/Thesis",
+    "host": "Madhavas-Air",
+    "username": "pesala",
+    "executable": "/Users/pesala/miniconda3/envs/Thesis/bin/python",
+    "cpu_count": 8,
+    "cpu_count_logical": 8,
+    "disk": {
+        "/": {
+            "total": 228.27386474609375,
+            "used": 8.542171478271484
+        }
+    },
+    "gpuapple": {
+        "type": "arm",
+        "vendor": "Apple"
+    },
+    "memory": {
+        "total": 8.0
+    }
+}
