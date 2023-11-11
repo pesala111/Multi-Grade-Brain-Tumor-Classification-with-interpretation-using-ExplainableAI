@@ -185,3 +185,85 @@ for epoch in range(num_epochs):
             break
 
     scheduler.step(val_loss)
+
+
+test_loss = 0.0
+correct_test = 0
+total_test = 0
+
+model.eval()
+with torch.no_grad():
+    for i, (inputs, labels) in enumerate(test_loader):
+        inputs, labels = inputs.to(device), labels.to(device)
+        outputs = model(inputs)
+        loss = criterion(outputs, labels)
+        test_loss += loss.item()
+
+        _, predicted = torch.max(outputs.data, 1)
+        total_test += labels.size(0)
+        correct_test += (predicted == labels).sum().item()
+
+test_accuracy = 100 * correct_test / total_test
+print(f'Test Loss: {test_loss/len(test_loader):.4f}, Test Accuracy: {test_accuracy:.2f}%')
+
+#saving the model
+torch.save(model.state_dict(), 'brain_tumor_.pth')
+
+import matplotlib.pyplot as plt
+
+# Plotting the training vs validation loss
+plt.figure(figsize=(12, 4))
+plt.title('Train vs Validation Loss')
+plt.subplot(1, 2, 1)
+plt.plot(train_losses, label='Train Loss', color='red')
+plt.plot(val_losses, label='Validation Loss', color='blue')
+plt.xlabel("Epochs")
+plt.ylabel("Loss")
+plt.legend()
+
+# Plotting the training vs validation accuracy
+plt.figure(figsize=(12,4))
+plt.subplot(1, 2, 2)
+plt.title('Train vs Validation Accuracy')
+plt.plot(train_accuracies, label='Train Accuracy', color='red')
+plt.plot(val_accuracies, label='Validation Accuracy', color='blue')
+plt.xlabel('Epochs')
+plt.ylabel('Accuracy')
+plt.legend()
+
+plt.tight_layout()
+plt.show()
+
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.metrics import confusion_matrix
+
+# Get the model's predictions
+def get_predictions(model, dataloader):
+    model.eval()
+    all_preds = []
+    all_labels = []
+    with torch.no_grad():
+        for inputs, labels in dataloader:
+            inputs, labels = inputs.to(device), labels.to(device)
+            outputs = model(inputs)
+            _, preds = torch.max(outputs, 1)
+            all_preds.extend(preds.cpu().numpy())
+            all_labels.extend(labels.cpu().numpy())
+    return all_preds, all_labels
+
+predictions, true_labels = get_predictions(model, test_loader)
+
+# Generate confusion matrix
+cm = confusion_matrix(true_labels, predictions)
+
+# Plotting the confusion matrix
+plt.figure(figsize=(10, 10))
+sns.heatmap(cm, annot=True, cmap='Blues', fmt='g', cbar=True,
+            xticklabels=list(label_to_int.keys()),
+            yticklabels=list(label_to_int.keys()))
+plt.xlabel('Predicted labels')
+plt.ylabel('True labels')
+plt.title('Confusion Matrix')
+plt.show()
