@@ -1,5 +1,7 @@
 .idea/
 test.py
 wandb/
+__pycache__/
 
 .DS_Store
+test_main.py
