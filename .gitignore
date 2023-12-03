@@ -5,3 +5,4 @@ __pycache__/
 
 .DS_Store
 test_main.py
+main.py
