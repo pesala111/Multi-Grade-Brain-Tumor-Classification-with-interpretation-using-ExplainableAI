@@ -2,11 +2,13 @@ import os
 import torch
 import torchio as tio
 import torch.nn as nn
+import torch.nn.functional as F
 from torch.utils.data import DataLoader, random_split
 import torchvision.models as models
 from sklearn.metrics import confusion_matrix, roc_curve, auc
 import matplotlib.pyplot as plt
 import seaborn as sns
+from torchvision.models.video.resnet import R3D_18_Weights
 
 # Data Preprocessing Class
 def create_subjects_list(root_dir, class_labels, preprocessing_transforms):
@@ -33,7 +35,8 @@ def create_subjects_list(root_dir, class_labels, preprocessing_transforms):
 class ResNet3D(nn.Module):
     def __init__(self, num_classes, dropout_prob=0.5):
         super(ResNet3D, self).__init__()
-        self.resnet3d = models.video.r3d_18(pretrained=False)
+        weights = R3D_18_Weights.KINETICS400_V1
+        self.resnet3d = models.video.r3d_18(weights=weights)
         # Modified the first convolutional layer to take 1-channel(grey) input
         self.resnet3d.stem[0] = nn.Conv3d(
             1, 64, kernel_size=(3, 7, 7), stride=(1, 2, 2), padding=(1, 3, 3), bias=False)
@@ -44,6 +47,27 @@ class ResNet3D(nn.Module):
         )
     def forward(self, x):
         return self.resnet3d(x)
+
+
+class Simple3DCNN(nn.Module):
+    def __init__(self, num_classes):
+        super(Simple3DCNN, self).__init__()
+        self.conv1 = nn.Conv3d(1, 64, kernel_size=3, stride=1, padding=1)
+        self.pool = nn.MaxPool3d(kernel_size=2, stride=2, padding=0)
+        self.conv2 = nn.Conv3d(64, 128, kernel_size=3, stride=1, padding=1)
+
+        self.fc1 = nn.Linear(128 * 136800, 1000)
+        self.fc2 = nn.Linear(1000, num_classes)
+
+    def forward(self, x):
+        x = self.pool(F.relu(self.conv1(x)))
+        x = self.pool(F.relu(self.conv2(x)))
+        print("Output size after conv2:", x.size())
+        x = x.view(-1, 128 * 136800)
+        x = F.relu(self.fc1(x))
+        x = self.fc2(x)
+        return x
+
 
 # Model Training Class
 def train_model(model, train_loader, criterion, optimizer, device):

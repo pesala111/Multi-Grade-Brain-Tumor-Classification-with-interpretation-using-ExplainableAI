@@ -7,10 +7,9 @@ import wandb
 import hydra
 from omegaconf import DictConfig
 
-@hydra.main(config_path="config.yaml", config_name="config")
+@hydra.main(config_path="", config_name="config", version_base=None)
 def main(cfg:DictConfig):
     # Hydra configuration
-    batch_size = cfg.training.batch_size
     root_dir = cfg.data.root_dir
     class_labels = cfg.data.class_labels
     batch_size = cfg.data.batch_size
@@ -20,7 +19,7 @@ def main(cfg:DictConfig):
     momentum = cfg.training.momentum
     weight_decay = cfg.training.weight_decay
     patience = cfg.training.patience
-    wandb.init(project="cfg.wandb.project", entity="cfg.wandb.entity")
+    wandb.init(project=cfg.wandb.project, entity=cfg.wandb.entity, name=cfg.wandb.run_name)
     wandb.config = {
         "learning_rate": learning_rate,
         "epochs": num_epochs,
@@ -62,6 +61,7 @@ def main(cfg:DictConfig):
     val_losses, val_accuracies = [], []
 
     for epoch in range(num_epochs):
+        print("started")
         train_loss, train_accuracy = utils.train_model(model, train_loader, criterion, optimizer, device)
         val_loss, val_accuracy = utils.validate_model(model, val_loader, criterion, device)
 
@@ -97,3 +97,6 @@ def main(cfg:DictConfig):
                "roc_curve": wandb.Image(plot_roc_curve)})
     """
     wandb.finish()
+
+if __name__ == "__main__":
+    main()

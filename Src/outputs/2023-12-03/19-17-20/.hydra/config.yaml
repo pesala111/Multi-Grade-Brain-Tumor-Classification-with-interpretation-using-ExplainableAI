@@ -1,0 +1,20 @@
+data:
+  root_dir: /Users/pesala/Documents/MICCAI_BraTS_2019_Data_Training 2/MICCAI_BraTS_2019_Data_Training
+  class_labels:
+    HGG: 0
+    LGG: 1
+  batch_size: 1
+model:
+  num_classes: 2
+  dropout_prob: 0.5
+training:
+  learning_rate: 0.005
+  momentum: 0.9
+  weight_decay: 0.0001
+  num_epochs: 45
+  scheduler_patience: 4
+  scheduler_factor: 0.1
+  patience: 4
+wandb:
+  project: Brain Tumor Classification
+  entity: pesala111

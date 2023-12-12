@@ -1,6 +1,6 @@
 # Data Settings
 data:
-  root_dir: '/Users/pesala/Documents/MICCAI_BraTS_2019_Data_Training 2/MICCAI_BraTS_2019_Data_Training'
+  root_dir: '/Users/pesala/Documents/brats_dataset_short/brats_dataset_short'
   class_labels:
     HGG: 0
     LGG: 1
@@ -13,15 +13,17 @@ model:
 
 # Training Settings
 training:
-  learning_rate: 0.005
+  learning_rate: 0.001
   momentum: 0.9
   weight_decay: 0.0001
   num_epochs: 45
   scheduler_patience: 4
   scheduler_factor: 0.1
-  patience: 4
+  patience: 5
 
 # Wandb 
 wandb:
   project: "Brain Tumor Classification"
-  entity: "Initial parameters"
+  entity: "thesis-htwsaar"
+  run_name: "LGG data balanced to HGG"
+
