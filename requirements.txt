@@ -1,0 +1,9 @@
+torch
+torchio
+torchvision
+matplotlib
+seaborn
+scikit-learn
+wandb
+hydra-core
+omegaconf
