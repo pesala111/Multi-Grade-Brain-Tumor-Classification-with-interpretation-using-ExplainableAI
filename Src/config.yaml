@@ -1,29 +1,57 @@
 # Data Settings
 data:
   root_dir: '/Users/pesala/Documents/brats_dataset_short/brats_dataset_short'
+  seed : 42
   class_labels:
     HGG: 0
     LGG: 1
-  batch_size: 1
+  batch_size: 4
 
 # Model Settings
 model:
   num_classes: 2
+  input_shape: (1, 155, 240, 240)  # Format: (C, D, H, W)
   dropout_prob: 0.5
+  architecture: "MobilenetV2_3D"
+  #criterion: "CrossEntropyLoss"
+  optimizer: "adam"
+
 
 # Training Settings
 training:
   learning_rate: 0.001
   momentum: 0.9
-  weight_decay: 0.0001
-  num_epochs: 45
+  weight_decay: 0.01
+  num_epochs: 2
   scheduler_patience: 4
-  scheduler_factor: 0.1
+  scheduler_factor: 0.05
   patience: 5
-
 # Wandb 
 wandb:
   project: "Brain Tumor Classification"
   entity: "thesis-htwsaar"
-  run_name: "LGG data balanced to HGG"
+  run_name: "MobilenetV2_run5"
 
+# Wandb Sweep Configuration
+wandb_sweep:
+  method: random
+  metric:
+    name: accuracy
+    goal: maximize
+    #name: val_loss
+    #goal: minimize
+  parameters:
+    learning_rate:
+      min: 0.00001
+      max: 0.01
+    batch_size:
+      values: [2, 4]
+    dropout_prob:
+      min: 0.1
+      max: 0.5
+    optimizer:
+      values: ["adam", "sgd"]
+    momentum: 0.9
+    weight_decay:
+      min: 0.0001
+      max: 0.1

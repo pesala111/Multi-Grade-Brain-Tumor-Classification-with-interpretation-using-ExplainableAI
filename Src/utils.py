@@ -32,6 +32,60 @@ def create_subjects_list(root_dir, class_labels, preprocessing_transforms):
     return subjects_list
 
 # Model Defining Class
+def conv_block(in_channels, out_channels, kernel_size, stride, padding='same'):
+    if padding == 'same':
+        padding = kernel_size // 2
+    return nn.Sequential(
+        nn.Conv3d(in_channels, out_channels, kernel_size, stride, padding, bias=False),
+        nn.BatchNorm3d(out_channels),
+        nn.ReLU6(inplace=True)
+    )
+
+class DepthwiseConv3D(nn.Module):
+    def __init__(self, in_channels, out_channels, stride):
+        super(DepthwiseConv3D, self).__init__()
+        self.depthwise = nn.Conv3d(in_channels, in_channels, kernel_size=3, stride=stride, padding=1,
+                                   groups=in_channels, bias=False)
+        self.pointwise = nn.Conv3d(in_channels, out_channels, kernel_size=1, stride=1, padding=0, bias=False)
+        self.bn1 = nn.BatchNorm3d(in_channels)
+        self.bn2 = nn.BatchNorm3d(out_channels)
+        self.relu = nn.ReLU6(inplace=True)
+
+    def forward(self, x):
+        x = self.depthwise(x)
+        x = self.bn1(x)
+        x = self.relu(x)
+        x = self.pointwise(x)
+        x = self.bn2(x)
+        x = self.relu(x)
+        return x
+
+
+class MobileNetV2_3D(nn.Module):
+    def __init__(self, input_shape, num_classes):
+        super(MobileNetV2_3D, self).__init__()
+        self.input_shape = input_shape
+        in_channels = input_shape[0]
+
+        self.initial_layer = conv_block(in_channels, 32, 3, 2, padding='same')
+        self.block1 = DepthwiseConv3D(32, 64, 1)
+
+        # Add more blocks as needed following the MobileNetV2 architecture
+
+        self.avg_pool = nn.AdaptiveAvgPool3d(1)
+        self.conv2 = nn.Conv3d(64, num_classes, 1)
+
+    def forward(self, x):
+        x = self.initial_layer(x)
+        x = self.block1(x)
+
+        # Forward through additional blocks
+
+        x = self.avg_pool(x)
+        x = self.conv2(x)
+        x = torch.flatten(x, 1)
+        return F.softmax(x, dim=1)
+
 class ResNet3D(nn.Module):
     def __init__(self, num_classes, dropout_prob=0.5):
         super(ResNet3D, self).__init__()
@@ -67,7 +121,30 @@ class Simple3DCNN(nn.Module):
         x = F.relu(self.fc1(x))
         x = self.fc2(x)
         return x
+"""
 
+class Simple3DCNN(nn.Module):
+    def __init__(self, num_classes):
+        super(Simple3DCNN, self).__init__()
+        self.conv1 = nn.Conv3d(1, 64, kernel_size=3, stride=1, padding=1)
+        self.pool = nn.MaxPool3d(kernel_size=2, stride=2, padding=0)
+        self.conv2 = nn.Conv3d(64, 128, kernel_size=3, stride=1, padding=1)
+        self.adaptive_pool = nn.AdaptiveAvgPool3d(output_size=(20, 20, 20))
+
+        # Adjusted size for the fc1 layer
+        self.fc1 = nn.Linear(128 * 20 * 20 * 20, 1000)  # Approximately 128 * 40 * 40 * 40
+        self.fc2 = nn.Linear(1000, num_classes)
+
+    def forward(self, x):
+        x = self.pool(F.relu(self.conv1(x)))
+        x = self.pool(F.relu(self.conv2(x)))
+        x = self.adaptive_pool(x)
+        x = x.view(-1, 128 * 20 * 20 * 20)  # Flatten the tensor for the fc1 layer
+        x = F.relu(self.fc1(x))
+        x = self.fc2(x)
+        return x
+
+"""
 
 # Model Training Class
 def train_model(model, train_loader, criterion, optimizer, device):
@@ -157,6 +234,7 @@ def test_model(model, test_loader, criterion, device):
 # Model Prediction / Evaluation
 def get_predictions(model, dataloader, device):
     model.eval()
+    all_probs = []
     all_preds = []
     all_labels = []
     with torch.no_grad():
@@ -169,10 +247,13 @@ def get_predictions(model, dataloader, device):
                 labels = torch.tensor(batch['label'], dtype=torch.long).to(device)
 
             outputs = model(inputs)
+            probs = torch.sigmoid(outputs).squeeze()
             _, preds = torch.max(outputs, 1)
+
+            all_probs.extend(probs.cpu().numpy())  # Store probabilities
             all_preds.extend(preds.cpu().numpy())
             all_labels.extend(labels.cpu().numpy())
-    return all_preds, all_labels
+    return all_probs, all_preds, all_labels
 
 # Confusion Matrix
 def plot_confusion_matrix(true_labels, predictions, class_labels):
