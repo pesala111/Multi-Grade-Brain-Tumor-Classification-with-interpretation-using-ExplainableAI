@@ -11,27 +11,48 @@ import seaborn as sns
 from torchvision.models.video.resnet import R3D_18_Weights
 
 # Data Preprocessing Class
-def create_subjects_list(root_dir, class_labels, preprocessing_transforms):
+def create_subjects_list(root_dir, class_labels, preprocessing_transforms,
+                         rotation_transform, flipping_transform, brightness_transform):
     subjects_list = []
     for classes in os.listdir(root_dir):
         class_path = os.path.join(root_dir, classes)
         if classes not in class_labels:
             continue
+        class_subjects_count = 0
         for subjects in os.listdir(class_path):
             subjects_path = os.path.join(class_path, subjects)
             if not os.path.isdir(subjects_path):
                 continue
             for file in os.listdir(subjects_path):
-                if file.endswith('_t1.nii.gz'):
+                if file.endswith('t1.nii.gz') or file.endswith('resampled.nii.gz'):
                     T1_sample_path = os.path.join(subjects_path, file)
+
                     t1_subject = tio.Subject(t1=tio.ScalarImage(T1_sample_path), label=class_labels[classes])
                     preprocessed_subject = preprocessing_transforms(t1_subject)
                     subjects_list.append(preprocessed_subject)
-        print(f"Total {classes} processed: {len(subjects_list)}")
+                    class_subjects_count += 1
+                    if classes == "LGG":
+                        # rotation augmentation
+                        rotation_subject = rotation_transform(t1_subject)
+                        preprocessed_subject = preprocessing_transforms(rotation_subject)
+                        subjects_list.append(preprocessed_subject)
+                        # flipping augmentation
+                        flipping_subject = flipping_transform(t1_subject)
+                        preprocessed_subject = preprocessing_transforms(flipping_subject)
+                        subjects_list.append(preprocessed_subject)
+                        # brightness augmentation
+                        brightness_subject = brightness_transform(t1_subject)
+                        preprocessed_subject = preprocessing_transforms(brightness_subject)
+                        subjects_list.append(preprocessed_subject)
+                        class_subjects_count += 3
+
+        print(f"Total {classes} processed: {class_subjects_count}")
 
     return subjects_list
 
+
 # Model Defining Class
+
 def conv_block(in_channels, out_channels, kernel_size, stride, padding='same'):
     if padding == 'same':
         padding = kernel_size // 2
@@ -40,6 +61,30 @@ def conv_block(in_channels, out_channels, kernel_size, stride, padding='same'):
         nn.BatchNorm3d(out_channels),
         nn.ReLU6(inplace=True)
     )
+
+class InvertedResidual3D(nn.Module):
+    def __init__(self, in_channels, out_channels, stride, expand_ratio):
+        super(InvertedResidual3D, self).__init__()
+        hidden_dim = round(in_channels * expand_ratio)
+        self.use_res_connect = stride == 1 and in_channels == out_channels
+
+        layers = []
+        if expand_ratio != 1:
+            layers.append(conv_block(in_channels, hidden_dim, kernel_size=1, stride=1))
+        layers.extend([
+            DepthwiseConv3D(hidden_dim, hidden_dim, stride=stride),
+            nn.Conv3d(hidden_dim, out_channels, 1, 1, 0, bias=False),
+            nn.BatchNorm3d(out_channels),
+        ])
+
+        self.layers = nn.Sequential(*layers)
+        self.out_channels = out_channels
+
+    def forward(self, x):
+        if self.use_res_connect:
+            return x + self.layers(x)
+        else:
+            return self.layers(x)
 
 class DepthwiseConv3D(nn.Module):
     def __init__(self, in_channels, out_channels, stride):
@@ -60,7 +105,6 @@ class DepthwiseConv3D(nn.Module):
         x = self.relu(x)
         return x
 
-
 class MobileNetV2_3D(nn.Module):
     def __init__(self, input_shape, num_classes):
         super(MobileNetV2_3D, self).__init__()
@@ -68,23 +112,44 @@ class MobileNetV2_3D(nn.Module):
         in_channels = input_shape[0]
 
         self.initial_layer = conv_block(in_channels, 32, 3, 2, padding='same')
-        self.block1 = DepthwiseConv3D(32, 64, 1)
-
-        # Add more blocks as needed following the MobileNetV2 architecture
+        self.block1 = InvertedResidual3D(32, 16, 1, expand_ratio=1)
+        self.block2 = InvertedResidual3D(16, 24, 2, expand_ratio=6)  # Stride 2 for downsampling
+        self.block3 = InvertedResidual3D(24, 32, 2, expand_ratio=6)  # Repeated blocks can be added here
+        self.block4 = InvertedResidual3D(32, 64, 2, expand_ratio=6)
+        self.block5 = InvertedResidual3D(64, 96, 1, expand_ratio=6)  # Stride 1 to maintain dimensions
+        self.block6 = InvertedResidual3D(96, 160, 2, expand_ratio=6)  # New block for downsampling
+        self.block7 = InvertedResidual3D(160, 320, 1, expand_ratio=6)  # New block to increase features
+        self.block8 = InvertedResidual3D(320, 480, 2, expand_ratio=6)  # Additional block for more complexity
+        self.block9 = InvertedResidual3D(480, 640, 1, expand_ratio=6)  # Additional block to increase features further
 
         self.avg_pool = nn.AdaptiveAvgPool3d(1)
-        self.conv2 = nn.Conv3d(64, num_classes, 1)
+        self.conv2 = nn.Conv3d(640, 1280, 1)
+        self.dropout = nn.Dropout3d(p=0.05)
+        self.classifier = nn.Linear(1280, num_classes)
+
+        #self.conv2 = nn.Conv3d(96, num_classes, 1)
 
     def forward(self, x):
         x = self.initial_layer(x)
         x = self.block1(x)
-
-        # Forward through additional blocks
+        x = self.block2(x)
+        x = self.block3(x)
+        x = self.block4(x)
+        x = self.block5(x)
+        x = self.block6(x)
+        x = self.block7(x)
+        x = self.block8(x)
+        x = self.block9(x)
 
         x = self.avg_pool(x)
         x = self.conv2(x)
         x = torch.flatten(x, 1)
+        x = self.dropout(x)
+        x = self.classifier(x)
+        #return x
+
         return F.softmax(x, dim=1)
+
 
 class ResNet3D(nn.Module):
     def __init__(self, num_classes, dropout_prob=0.5):

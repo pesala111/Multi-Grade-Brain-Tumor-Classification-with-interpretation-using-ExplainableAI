@@ -15,7 +15,7 @@ with initialize(config_path="", job_name="my_app"):
     cfg = compose(config_name="config")
 
 def main(cfg:DictConfig):
-    #root_dir = cfg.data.root_dir
+    root_dir = cfg.data.root_dir
     num_classes= 2
     input_shape= (1, 155, 240, 240)
     #num_classes = int(cfg.model.num_classes)

@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 import torchio as tio
+import os
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 import utils
 # Initialize wandb (if using wandb for experiment tracking)
@@ -8,7 +9,7 @@ import utils
 # wandb.init(project="Brain Tumor Classification", entity="your_entity_name")
 
 # Define paths and parameters
-root_dir = '/Users/pesala/Documents/MICCAI_BraTS_2019_Data_Training 2/MICCAI_BraTS_2019_Data_Training'
+root_dir = '/Users/pesala/Documents/brats_dataset_short/brats_dataset_short'
 class_labels = {'HGG': 0, 'LGG': 1}
 
 # Define preprocessing transforms
@@ -19,7 +20,14 @@ preprocessing_transforms = tio.Compose([
 
 # Create subjects list
 subjects_list = utils.create_subjects_list(root_dir, class_labels, preprocessing_transforms)
+sample_subject = subjects_list[0]  # Get the first subject for simplicity
+image = sample_subject['t1']
+voxel_resolution = image.spacing  # Voxel size (resolution) in mm (width, height, depth)
+volume_resolution = image.shape  # Volume size (resolution) in voxels (height, width, depth)
 
+print(f"Voxel resolution (after preprocessing): {voxel_resolution} mm")
+print(f"Volume resolution (after preprocessing): height={volume_resolution[0]}, width={volume_resolution[1]}, depth={volume_resolution[2]}")
+"""
 # Create dataset and split it
 dataset = tio.SubjectsDataset(subjects_list)
 train_size = int(0.7 * len(dataset))
@@ -76,3 +84,4 @@ utils.plot_training_curves(train_losses, val_losses, train_accuracies, val_accur
 predictions, true_labels = utils.get_predictions(model, test_loader, device)
 utils.plot_confusion_matrix(true_labels, predictions, class_labels)
 utils.plot_roc_curve(true_labels, predictions, "ResNet3D")
+"""
