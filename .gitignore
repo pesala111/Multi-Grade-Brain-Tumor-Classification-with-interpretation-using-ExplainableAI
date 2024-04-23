@@ -3,9 +3,14 @@ test.py
 wandb/
 __pycache__/
 
+
+
+# src folder
+src/outputs/2023-12-03
+
+# main folder
 .DS_Store
-test_main.py
 main.py
-Colab_update.py
 Grad_CAM.py
+Colab_update.py
 sweeps_random.yaml
