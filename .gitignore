@@ -7,6 +7,7 @@ __pycache__/
 
 # src folder
 src/outputs/2023-12-03
+src/test_codes.py
 
 # main folder
 .DS_Store
