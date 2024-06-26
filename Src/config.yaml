@@ -1,31 +1,29 @@
 # Data Settings
 data:
-  root_dir: '/Users/pesala/Documents/brats_dataset_short/brats_dataset_short'
+  root_dir: "path_to_the_root_directory"
   seed : 42
   class_labels:
     Healthy: 0
-    # LGG: 2
-    HGG: 1
-  batch_size: 4
+    LGG: 1
+    HGG: 2
+  batch_size: 2
 
 # Model Settings
 model:
-  num_classes: 2
-  input_shape: (1, 155, 240, 240)  # Format: (C, D, H, W)
+  num_classes: 3
+  input_shape: (1, 155, 240, 240)  #Format: (C, D, H, W)
   dropout_prob: 0.5
-  # available architectures are MobilenetV2_3D, Simple3dCNN, Resnet3D
-  architecture: "MobilenetV2_3D"
-  #criterion: "CrossEntropyLoss"
-  # available optimizers are sgd, adam
-  optimizer: "sgd"
+  architecture: "MobileNetV2"     # available architectures: MobilenetV2_3D, Resnet3D
+  criterion: "CrossEntropyLoss"
+  optimizer: "adam"               # available optimizers are sgd, adam
 
 # Training Settings
 training:
   learning_rate: 0.001
   momentum: 0.9
-  weight_decay: 0.01
+  weight_decay: 0.05
   num_epochs: 40
-  scheduler_patience: 3
+  scheduler_patience: 4
   scheduler_factor: 0.05
   patience: 5
 
@@ -33,4 +31,15 @@ training:
 wandb:
   project: "Brain Tumor Classification"
   entity: "thesis-htwsaar"
-  run_name: "MobilenetV2_final"
+  run_name: "MobilenetV2"
+
+
+
+
+
+
+
+
+
+
+

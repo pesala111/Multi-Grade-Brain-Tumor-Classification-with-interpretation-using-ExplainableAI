@@ -8,8 +8,6 @@ for t1_MRI in os.listdir(root_dir):
         img = nib.load(t1_MRI_path)
         height, width, depth = img.shape
         print(f'height={height}, width={width}, depth={depth}')
-        #data_type = img.get_data_dtype()
-        #print('Data type:', data_type)
 
 
 

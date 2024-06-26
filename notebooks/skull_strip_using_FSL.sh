@@ -1,4 +1,4 @@
-# This code is for skull stripping using FSL BET
+# This code is for skull stripping using FSL Brain Extraction Tool (BET)
 
 #!/bin/bash
 
