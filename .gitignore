@@ -3,10 +3,12 @@ test.py
 wandb/
 __pycache__/
 
-
+# notebook folder
+notebooks/Change_MRI_Orientation.py
 
 # src folder
 src/outputs/2023-12-03
+src/test_codes.py
 
 # main folder
 .DS_Store
