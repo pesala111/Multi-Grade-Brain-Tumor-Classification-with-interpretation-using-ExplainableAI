@@ -742,4 +742,3 @@ model = ModifiedResNet3D(num_classes)
 # Print the output shapes of each layer
 print_layer_shapes(model, input_size)
 """
-
