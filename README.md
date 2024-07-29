@@ -7,22 +7,6 @@ The top 5 best-performing model checkpoints are included in the Git repository.
 For the Explainable AI (XAI) methods, the winning model checkpoint 'MobileNetV2_2221311_0.3' was used.
 
 
-## Table of Contents
-1. [Introduction](#introduction)
-2. [Requirements](#Requirements)
-3. [Usage](#usage)
-4. [Data Preparation](#data-preparation)
-5. [Model Training](#model-training)
-6. [Model Evaluation](#model-evaluation)
-7. [Explainable AI Methods](#explainable-ai-methods)
-8. [Results](#results)
-9. [Conclusion](#conclusion)
-10. [Contributors](#contributors)
-11. [License](#license)
-
-# Introduction
-
-
 # Requirements
 ```
 python==3.11.6
@@ -38,8 +22,8 @@ scipy==1.11.3
 hydra-core==1.3.2
 omegaconf==2.3.0
 ```
-# Data Preparation
-The dataset used in this project is stored in Google Drive. click on the below-provided link to download the data.
+# Dataset
+The dataset used in this project is stored in Google Drive. Follow the link below to download the data.
 
 Download the dataset:
 ```bash
